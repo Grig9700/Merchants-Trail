@@ -40,6 +40,7 @@ public class Map : MonoBehaviour
 
         InitializeGrid();
         SmoothGrid();
+        SmoothGrid();
 
         //GenerateRivers(grid);
         DrawTerrainMesh();
@@ -287,9 +288,13 @@ public class Map : MonoBehaviour
                 b.y = z - grid[x, y].height + grid[x, y + 1].height;
             }
 
-            if (x > 0 && y < size - 1 && grid[x - 1, y + 1].height < grid[x, y].height)
+            if (x > 0 && y < size - 1 && grid[x - 1, y + 1].height < grid[x, y].height
+                && grid[x, y + 1].height == grid[x, y].height
+                && grid[x - 1, y].height == grid[x, y].height)
             {
                 a.y = z - grid[x, y].height + grid[x - 1, y + 1].height;
+
+                flippedVertices = true;
             }
 
             if (x > 0 && y > 0 && grid[x - 1, y - 1].height < grid[x, y].height)
@@ -297,9 +302,13 @@ public class Map : MonoBehaviour
                 c.y = z - grid[x, y].height + grid[x - 1, y - 1].height;
             }
 
-            if (x < size - 1 && y > 0 && grid[x + 1, y - 1].height < grid[x, y].height)
+            if (x < size - 1 && y > 0 && grid[x + 1, y - 1].height < grid[x, y].height
+                && grid[x, y - 1].height == grid[x, y].height
+                && grid[x + 1, y].height == grid[x, y].height)
             {
                 d.y = z - grid[x, y].height + grid[x + 1, y - 1].height;
+
+                flippedVertices = true;
             }
 
             if (x < size - 1 && y < size - 1 && grid[x + 1, y + 1].height < grid[x, y].height)
