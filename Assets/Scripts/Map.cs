@@ -440,18 +440,27 @@ public class Map : MonoBehaviour
             for (int x = 0; x < size; x++)
             {
                 Cell cell = grid[x, y];
-                if (cell.isWater || cell.isMountain)
+                if (cell.isWater)
                     continue;
 
                 float v = Random.Range(0f, treeDensity);
                 if (noiseMap[x, y] > v)
                     continue;
 
-                //GameObject prefab = clutter.treePrefabs[Random.Range(0, clutter.treePrefabs.Length)];
-                //GameObject obj = Instantiate(prefab, transform);
-                //obj.transform.position = new Vector3(x, 0, y);
-                //obj.transform.rotation = Quaternion.Euler(0, Random.Range(0, 360f), 0);
-                //obj.transform.localScale = Vector3.one * Random.Range(.8f, 1.2f);
+                GameObject prefab = null;
+
+                if (cell.isMountain)
+                    prefab = clutter.GetMountainClutter();
+                else if (cell.isHill)
+                    prefab = clutter.GetHillClutter();
+                else 
+                    prefab = clutter.GetGrassClutter();
+
+
+                GameObject obj = Instantiate(prefab, transform);
+                obj.transform.position = new Vector3(x, 0, y);
+                obj.transform.rotation = Quaternion.Euler(0, Random.Range(0, 360f), 0);
+                obj.transform.localScale = Vector3.one * Random.Range(.8f, 1.2f);
             }
         }
     }
