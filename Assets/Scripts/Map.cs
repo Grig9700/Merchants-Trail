@@ -12,21 +12,24 @@ public class Map : MonoBehaviour
 
     [Header("Terrain")]
     public float scale = .1f;
-    public float waterLevel = .4f;
+    public int size = 100;
+    public int height = 10;
+    public float elevationScale = 0.2f;
+    public float waterLevel = .2f;
     public float waterHeightDisplacement = -.1f;
-    public float hillLevel = .6f;
-    public float hillHeightDisplacement = .4f;
+    public float hillLevel = .5f;
+    //public float hillHeightDisplacement = .4f;
     public float mountainLevel = .8f;
-    public float mountainHeightDisplacement = .8f;
+    //public float mountainHeightDisplacement = .8f;
 
     [Header("Clutter")]
     public float treeNoiseScale = .05f;
     public float treeDensity = .5f;
     public float riverNoiseScale = .06f;
     public int rivers = 5;
-    public int size = 100;
 
     Cell[,] grid;
+    float[] elevation;
 
     Quaternion qRight = Quaternion.AngleAxis(90, Vector3.up);
     Quaternion qLeft = Quaternion.AngleAxis(-90, Vector3.up);
@@ -39,13 +42,17 @@ public class Map : MonoBehaviour
             Random.InitState(seed);
 
         InitializeGrid();
-        SmoothGrid();
-        SmoothGrid();
+
+        //int iterator = 0;
+        //while(SmoothGrid() && iterator < height * 10)
+        //{
+        //    iterator++;
+        //}
 
         //GenerateRivers(grid);
         DrawTerrainMesh();
         DrawEdgeMesh();
-        GenerateClutter();
+        //GenerateClutter();
     }
 
     void InitializeGrid()
@@ -61,16 +68,22 @@ public class Map : MonoBehaviour
             }
         }
 
-        float[,] falloffMap = new float[size, size];
-        for (int y = 0; y < size; y++)
+        //float[,] falloffMap = new float[size, size];
+        //for (int y = 0; y < size; y++)
+        //{
+        //    for (int x = 0; x < size; x++)
+        //    {
+        //        float xv = x / (float)size * 2 - 1;
+        //        float yv = y / (float)size * 2 - 1;
+        //        float v = Mathf.Max(Mathf.Abs(xv), Mathf.Abs(yv));
+        //        falloffMap[x, y] = Mathf.Pow(v, 3f) / (Mathf.Pow(v, 3f) + Mathf.Pow(2.2f - 2.2f * v, 3f));
+        //    }
+        //}
+
+        elevation = new float[height];
+        for (int i = 0; i < height; i++)
         {
-            for (int x = 0; x < size; x++)
-            {
-                float xv = x / (float)size * 2 - 1;
-                float yv = y / (float)size * 2 - 1;
-                float v = Mathf.Max(Mathf.Abs(xv), Mathf.Abs(yv));
-                falloffMap[x, y] = Mathf.Pow(v, 3f) / (Mathf.Pow(v, 3f) + Mathf.Pow(2.2f - 2.2f * v, 3f));
-            }
+            elevation[i] = 1f / height * i;
         }
 
         grid = new Cell[size, size];
@@ -79,62 +92,85 @@ public class Map : MonoBehaviour
             for (int x = 0; x < size; x++)
             {
                 float noiseValue = noiseMap[x, y];
-                noiseValue -= falloffMap[x, y];
+
+                int elevation = GetElevation(noiseValue - waterLevel);
+
+                //noiseValue -= falloffMap[x, y];
                 bool isWater = noiseValue < waterLevel;
                 bool isHill = hillLevel < noiseValue && noiseValue < mountainLevel;
                 bool isMountain = noiseValue > mountainLevel;
 
-                float height = isHill ? hillHeightDisplacement : isMountain ? mountainHeightDisplacement : 0;
+                if (isWater)
+                    elevation = 0;
 
-                Cell cell = new Cell(new Vector2Int(x, y), isWater, isHill, isMountain, height);
+                Cell cell = new Cell(new Vector2Int(x, y), isWater, isHill, isMountain, elevation);
                 grid[x, y] = cell;
             }
         }
     }
 
-    void SmoothGrid()
+    int GetElevation(float noiseValue)
     {
+        for(int i = 0; i < height - 1; i++) 
+        {
+            if (elevation[i] < noiseValue && noiseValue < elevation[i +1])
+                return i;
+        }
+        return height - 1;
+    }
+
+    bool SmoothGrid()
+    {
+        bool changed = false;
+
         for (int y = 0; y < size; y++)
         {
             for (int x = 0; x < size; x++)
             {
-                if (grid[x, y].height == 0)
+                if (grid[x, y].elevation == 0)
                     continue;
 
                 int myHeight = 0;
 
-                if (x > 0 && grid[x - 1, y].height >= grid[x, y].height)
+                if (x > 0 && grid[x - 1, y].elevation >= grid[x, y].elevation)
                     myHeight++;
 
-                if (y > 0 && grid[x, y - 1].height >= grid[x, y].height)
+                if (y > 0 && grid[x, y - 1].elevation >= grid[x, y].elevation)
                     myHeight++;
 
-                if (x < size - 1 && grid[x + 1, y].height >= grid[x, y].height)
+                if (x < size - 1 && grid[x + 1, y].elevation >= grid[x, y].elevation)
                     myHeight++;
 
-                if (y < size - 1 && grid[x, y + 1].height >= grid[x, y].height)
+                if (y < size - 1 && grid[x, y + 1].elevation >= grid[x, y].elevation)
                     myHeight++;
 
-                if (y > 0 && grid[x, y - 1].height < grid[x, y].height && y < size - 1 && grid[x, y + 1].height < grid[x, y].height
-                    || x > 0 && grid[x - 1, y].height < grid[x, y].height && x < size - 1 && grid[x + 1, y].height < grid[x, y].height)
+                if (y > 0 && grid[x, y - 1].elevation < grid[x, y].elevation && y < size - 1 && grid[x, y + 1].elevation < grid[x, y].elevation
+                    || x > 0 && grid[x - 1, y].elevation < grid[x, y].elevation && x < size - 1 && grid[x + 1, y].elevation < grid[x, y].elevation)
                     myHeight -= 5;
 
                 if (myHeight > 1)
                     continue;
 
-                if (grid[x, y].isHill)
+                if (grid[x, y].isHill && elevation[grid[x, y].elevation - 1] < hillLevel)
                 {
-                    grid[x, y] = new Cell(new Vector2Int(x, y), false, false, false, 0);
+                    grid[x, y] = new Cell(new Vector2Int(x, y), false, false, false, grid[x, y].elevation -1);
+                    changed = true;
                     continue;
                 }
 
-                if (grid[x, y].isMountain)
+                if (grid[x, y].isMountain && elevation[grid[x, y].elevation - 1] < mountainLevel)
                 {
-                    grid[x, y] = new Cell(new Vector2Int(x, y), false, true, false, hillHeightDisplacement);
+                    grid[x, y] = new Cell(new Vector2Int(x, y), false, true, false, grid[x, y].elevation - 1);
+                    changed = true;
                     continue;
                 }
+
+                grid[x, y] = new Cell(new Vector2Int(x, y), false, true, false, grid[x, y].elevation - 1);
+                changed = true;
             }
         }
+
+        return changed;
     }
 
     //void GenerateRivers(Cell[,] grid)
@@ -223,13 +259,13 @@ public class Map : MonoBehaviour
             }
         }
 
-        SelectSubTerrain("Grass", grass, 0, material.grassMaterial);
-        SelectSubTerrain("Hill", hill, hillHeightDisplacement, material.hillMaterial);
-        SelectSubTerrain("Mountain", mountain, mountainHeightDisplacement, material.mountainMaterial);
-        SelectSubTerrain("Water", water, waterHeightDisplacement, material.waterMaterial);
+        SelectSubTerrain("Grass", grass, material.grassMaterial);
+        SelectSubTerrain("Hill", hill, material.hillMaterial);
+        SelectSubTerrain("Mountain", mountain, material.mountainMaterial);
+        SelectSubTerrain("Water", water, material.waterMaterial, waterHeightDisplacement);
     }
 
-    void SelectSubTerrain(string meshName, List<Cell> cells, float displacement, Material material)
+    void SelectSubTerrain(string meshName, List<Cell> cells, Material material, float displacement = 0)
     {
         Mesh mesh = new Mesh();
         List<Vector3> vertices = new List<Vector3>();
@@ -238,7 +274,7 @@ public class Map : MonoBehaviour
 
         foreach ( var cell in cells )
         {
-            PlaceSurfaceVertice(cell.pos.x, cell.pos.y, displacement, vertices, triangles, uvs);
+            PlaceSurfaceVertice(cell.pos.x, cell.pos.y, cell.elevation * elevationScale + displacement, vertices, triangles, uvs);
         }
 
         mesh.vertices = vertices.ToArray();
@@ -262,62 +298,67 @@ public class Map : MonoBehaviour
 
         bool flippedVertices = false;
 
-        if (grid[x, y].height > 0)
+        if (grid[x, y].elevation > 0)
         {
-            if (x > 0 && grid[x - 1, y].height < grid[x, y].height)
+            float mod = 0;
+            if (x > 0 && grid[x - 1, y].elevation < grid[x, y].elevation)
             {
-                a.y = z - grid[x, y].height + grid[x - 1, y].height;
-                c.y = z - grid[x, y].height + grid[x - 1, y].height;
+                mod = z - elevation[grid[x, y].elevation] + elevation[grid[x - 1, y].elevation];
+                a.y = mod;
+                c.y = mod;
             }
 
-            if (y > 0 && grid[x, y - 1].height < grid[x, y].height)
+            if (y > 0 && grid[x, y - 1].elevation < grid[x, y].elevation)
             {
-                c.y = z - grid[x, y].height + grid[x, y - 1].height;
-                d.y = z - grid[x, y].height + grid[x, y - 1].height;
+                mod = z - elevation[grid[x, y].elevation] + elevation[grid[x, y - 1].elevation];
+                c.y = mod;
+                d.y = mod;
             }
 
-            if (x < size - 1 && grid[x + 1, y].height < grid[x, y].height)
+            if (x < size - 1 && grid[x + 1, y].elevation < grid[x, y].elevation)
             {
-                b.y = z - grid[x, y].height + grid[x + 1, y].height;
-                d.y = z - grid[x, y].height + grid[x + 1, y].height;
+                mod = z - elevation[grid[x, y].elevation] + elevation[grid[x + 1, y].elevation];
+                b.y = mod;
+                d.y = mod;
             }
 
-            if (y < size - 1 && grid[x, y + 1].height < grid[x, y].height)
+            if (y < size - 1 && grid[x, y + 1].elevation < grid[x, y].elevation)
             {
-                a.y = z - grid[x, y].height + grid[x, y + 1].height;
-                b.y = z - grid[x, y].height + grid[x, y + 1].height;
+                mod = z - elevation[grid[x, y].elevation] + elevation[grid[x, y + 1].elevation];
+                a.y = mod;
+                b.y = mod;
             }
 
-            if (x > 0 && y < size - 1 && grid[x - 1, y + 1].height < grid[x, y].height
-                && grid[x, y + 1].height == grid[x, y].height
-                && grid[x - 1, y].height == grid[x, y].height)
+            if (x > 0 && y < size - 1 && grid[x - 1, y + 1].elevation < grid[x, y].elevation
+                && grid[x, y + 1].elevation == grid[x, y].elevation
+                && grid[x - 1, y].elevation == grid[x, y].elevation)
             {
-                a.y = z - grid[x, y].height + grid[x - 1, y + 1].height;
+                a.y = z - elevation[grid[x, y].elevation] + elevation[grid[x - 1, y + 1].elevation];
 
                 flippedVertices = true;
             }
 
-            if (x > 0 && y > 0 && grid[x - 1, y - 1].height < grid[x, y].height)
+            if (x > 0 && y > 0 && grid[x - 1, y - 1].elevation < grid[x, y].elevation)
             {
-                c.y = z - grid[x, y].height + grid[x - 1, y - 1].height;
+                c.y = z - elevation[grid[x, y].elevation] + elevation[grid[x - 1, y - 1].elevation];
             }
 
-            if (x < size - 1 && y > 0 && grid[x + 1, y - 1].height < grid[x, y].height
-                && grid[x, y - 1].height == grid[x, y].height
-                && grid[x + 1, y].height == grid[x, y].height)
+            if (x < size - 1 && y > 0 && grid[x + 1, y - 1].elevation < grid[x, y].elevation
+                && grid[x, y - 1].elevation == grid[x, y].elevation
+                && grid[x + 1, y].elevation == grid[x, y].elevation)
             {
-                d.y = z - grid[x, y].height + grid[x + 1, y - 1].height;
+                d.y = z - elevation[grid[x, y].elevation] + elevation[grid[x + 1, y - 1].elevation];
 
                 flippedVertices = true;
             }
 
-            if (x < size - 1 && y < size - 1 && grid[x + 1, y + 1].height < grid[x, y].height)
+            if (x < size - 1 && y < size - 1 && grid[x + 1, y + 1].elevation < grid[x, y].elevation)
             {
-                b.y = z - grid[x, y].height + grid[x + 1, y + 1].height;
+                b.y = z - elevation[grid[x, y].elevation] + elevation[grid[x + 1, y + 1].elevation];
             }
 
-            if (grid[x, y + 1].height < grid[x, y].height && grid[x - 1, y].height < grid[x, y].height
-                || grid[x, y - 1].height < grid[x, y].height && grid[x + 1, y].height < grid[x, y].height)
+            if (x > 0 && y < size - 1 && grid[x, y + 1].elevation < grid[x, y].elevation && grid[x - 1, y].elevation < grid[x, y].elevation
+                || x < size - 1 && y > 0 && grid[x, y - 1].elevation < grid[x, y].elevation && grid[x + 1, y].elevation < grid[x, y].elevation)
             {
                 flippedVertices = true;
             }

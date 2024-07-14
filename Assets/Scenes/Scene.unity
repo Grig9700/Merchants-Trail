@@ -332,20 +332,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clutter: {fileID: 11400000, guid: 3ecd532a9c5379b47819492e5774e77d, type: 2}
   material: {fileID: 11400000, guid: 3fe415dfa4f1e51419162785f3040b3c, type: 2}
-  IsSeeded: 1
+  IsSeeded: 0
   seed: 39
   scale: 0.1
-  waterLevel: 0.4
+  size: 1000
+  height: 10
+  elevationScale: 0.2
+  waterLevel: 0.2
   waterHeightDisplacement: -0.1
-  hillLevel: 0.6
-  hillHeightDisplacement: 0.6
+  hillLevel: 0.5
   mountainLevel: 0.8
-  mountainHeightDisplacement: 1.2
   treeNoiseScale: 0.05
   treeDensity: 0.5
   riverNoiseScale: 0.06
   rivers: 5
-  size: 100
 --- !u!4 &1864780060
 Transform:
   m_ObjectHideFlags: 0
