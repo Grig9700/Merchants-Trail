@@ -330,22 +330,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42b524e0f2869ff4685f4db465cddb42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clutter: {fileID: 11400000, guid: 3ecd532a9c5379b47819492e5774e77d, type: 2}
-  material: {fileID: 11400000, guid: 3fe415dfa4f1e51419162785f3040b3c, type: 2}
-  IsSeeded: 1
-  seed: 39
-  scale: 0.1
-  waterLevel: 0.4
-  waterHeightDisplacement: -0.1
-  hillLevel: 0.6
-  hillHeightDisplacement: 0.6
-  mountainLevel: 0.8
-  mountainHeightDisplacement: 1.2
-  treeNoiseScale: 0.05
-  treeDensity: 0.5
-  riverNoiseScale: 0.06
-  rivers: 5
-  size: 100
+  seed: 69
+  mapHeight: 2
+  mapWidth: 2
+  chunkSize: 2
+  surfaceDensity: 1
+  densityMin: -32
+  densityMax: 16
 --- !u!4 &1864780060
 Transform:
   m_ObjectHideFlags: 0

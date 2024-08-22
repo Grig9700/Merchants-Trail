@@ -1,19 +1,24 @@
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class Cell
 {
-    public float height { get; private set; }
-    public Vector2Int pos { get; private set; }
-    public bool isWater {  get; private set; }
-    public bool isHill { get; private set; }
-    public bool isMountain { get; private set; }
+    public Vector3Int pos;
 
-    public Cell(Vector2Int pos, bool isWater, bool isHill, bool isMountain, float height) 
+    public Corner[] corners = new Corner[8];
+    public Edge[] edges = new Edge[12];
+
+    public Cell(Vector3Int pos, Corner[] corners, Edge[] edges)
     {
         this.pos = pos;
-        this.isWater = isWater;
-        this.isHill = isHill;
-        this.isMountain = isMountain;
-        this.height = height;
+        this.corners = corners;
+        this.edges = edges;
+    }
+
+    public void Draw(Vector3Int chunkPos)
+    {
+        Gizmos.DrawSphere(pos + chunkPos, 0.1f);
     }
 }
